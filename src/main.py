@@ -1,2 +1,7 @@
-print("Olá mundo profissional, sou o Val. É um prazer estar aqui")
-print("Adicionando mais uma linha pra ver o git diff após o commit")
+from api.remotive import buscar_vagas
+
+
+vagas = buscar_vagas("data")
+
+print(f"{len(vagas)} vagas encontradas.")
+print(vagas[0].keys())
