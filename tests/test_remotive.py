@@ -1,13 +1,16 @@
 from api.remotive import buscar_vagas
+from models.job import Job
 
 
-def test_buscar_vagas_retorna_lista(mocker):
+def test_buscar_vagas_retorna_lista_de_jobs(mocker):
     resposta_falsa = mocker.Mock()
     resposta_falsa.json.return_value = {
         "jobs": [
             {
                 "title": "Data Analyst",
                 "company_name": "Empresa Fictícia",
+                "candidate_required_location": "Brasil",
+                "url": "https://exemplo.com/vaga",
             }
         ]
     }
@@ -21,4 +24,8 @@ def test_buscar_vagas_retorna_lista(mocker):
 
     assert isinstance(vagas, list)
     assert len(vagas) == 1
-    assert vagas[0]["title"] == "Data Analyst"
+    assert isinstance(vagas[0], Job)
+    assert vagas[0].titulo == "Data Analyst"
+    assert vagas[0].empresa == "Empresa Fictícia"
+    assert vagas[0].localizacao == "Brasil"
+    assert vagas[0].url == "https://exemplo.com/vaga"
