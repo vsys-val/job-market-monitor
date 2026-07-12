@@ -7,4 +7,8 @@ class Job:
     empresa: str
     localizacao: str
     url: str
-    
+    categoria: str | None
+    tipo_contrato: str | None
+    data_publicacao: str | None
+    salario: str | None
+    fonte: str

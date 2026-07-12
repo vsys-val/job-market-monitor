@@ -12,6 +12,11 @@ def converter_vaga(vaga_remotive: dict) -> Job:
         empresa=vaga_remotive["company_name"],
         localizacao=vaga_remotive["candidate_required_location"],
         url=vaga_remotive["url"],
+        categoria=vaga_remotive.get("category"),
+        tipo_contrato=vaga_remotive.get("job_type"),
+        data_publicacao=vaga_remotive.get("publication_date"),
+        salario=vaga_remotive.get("salary"),
+        fonte="remotive",
     )
 
 
