@@ -1,26 +1,42 @@
 import argparse
+import logging
 
+from config.logging_config import configurar_logging
 from api.remotive import buscar_vagas
 from database.sqlite import criar_tabela, salvar_vagas
 from export.csv_exporter import exportar_vagas_csv
 
+logger = logging.getLogger(__name__)
+configurar_logging()
+
 
 def coletar_vagas(termo_busca: str) -> None:
+    logger.info(
+        "Iniciando coleta para o termo '%s'.",
+        termo_busca,
+    )
+
     criar_tabela()
 
     vagas = buscar_vagas(termo_busca)
     salvar_vagas(vagas)
 
-    print(
-        f"{len(vagas)} vagas processadas "
-        f"para a busca '{termo_busca}'."
+    logger.info(
+        "%s vagas encontradas para a busca '%s'.",
+        len(vagas),
+        termo_busca,
     )
 
 
 def exportar_dados() -> None:
+    logger.info("Iniciando exportação dos dados.")
+
     quantidade = exportar_vagas_csv()
 
-    print(f"{quantidade} vagas exportadas.")
+    logger.info(
+        "%s vagas exportadas para CSV.",
+        quantidade,
+    )
 
 
 def criar_parser() -> argparse.ArgumentParser:
