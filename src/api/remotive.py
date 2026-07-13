@@ -23,12 +23,21 @@ def converter_vaga(vaga_remotive: dict) -> Job:
 def buscar_vagas(termo_busca: str) -> list[Job]:
     response = requests.get(
         REMOTIVE_API_URL,
-        params={"search": termo_busca},
         timeout=10,
     )
 
     response.raise_for_status()
     dados = response.json()
 
-    return [converter_vaga(vaga) for vaga in dados["jobs"]]
-    
+    vagas = [
+        converter_vaga(vaga)
+        for vaga in dados["jobs"]
+    ]
+
+    termo_normalizado = termo_busca.lower().strip()
+
+    return [
+        vaga
+        for vaga in vagas
+        if termo_normalizado in vaga.titulo.lower()
+    ]
