@@ -1,9 +1,15 @@
 import argparse
 import logging
+from datetime import datetime
 
 from config.logging_config import configurar_logging
 from api.remotive import buscar_vagas
-from database.sqlite import criar_tabela, salvar_vagas
+from database.sqlite import (
+    criar_tabela,
+    criar_tabela_coletas,
+    registrar_coleta,
+    salvar_vagas,
+)
 from export.csv_exporter import exportar_vagas_csv
 
 logger = logging.getLogger(__name__)
@@ -11,20 +17,34 @@ configurar_logging()
 
 
 def coletar_vagas(termo_busca: str) -> None:
+    iniciada_em = datetime.now()
+
     logger.info(
         "Iniciando coleta para o termo '%s'.",
         termo_busca,
     )
 
     criar_tabela()
+    criar_tabela_coletas()
 
     vagas = buscar_vagas(termo_busca)
-    salvar_vagas(vagas)
+    vagas_salvas = salvar_vagas(vagas)
+
+    finalizada_em = datetime.now()
+
+    registrar_coleta(
+        termo_busca=termo_busca,
+        iniciada_em=iniciada_em,
+        finalizada_em=finalizada_em,
+        vagas_encontradas=len(vagas),
+        vagas_salvas=vagas_salvas,
+        status="sucesso",
+    )
 
     logger.info(
-        "%s vagas encontradas para a busca '%s'.",
+        "%s vagas encontradas e %s novas vagas salvas.",
         len(vagas),
-        termo_busca,
+        vagas_salvas,
     )
 
 
