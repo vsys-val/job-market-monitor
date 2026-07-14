@@ -3,7 +3,8 @@ import logging
 from datetime import datetime
 
 from config.logging_config import configurar_logging
-from api.remotive import buscar_vagas
+from api.himalayas import buscar_vagas as buscar_vagas_himalayas
+from api.remotive import buscar_vagas as buscar_vagas_remotive
 from database.sqlite import (
     criar_tabela,
     criar_tabela_coletas,
@@ -16,20 +17,28 @@ logger = logging.getLogger(__name__)
 configurar_logging()
 
 
-def coletar_vagas(termo_busca: str) -> None:
+def coletar_vagas(termo_busca: str, fonte: str) -> None:
     iniciada_em = datetime.now()
 
     logger.info(
-        "Iniciando coleta para o termo '%s'.",
+        "Iniciando coleta para '%s' usando a fonte '%s'.",
         termo_busca,
+        fonte,
     )
 
     criar_tabela()
     criar_tabela_coletas()
 
-    vagas = buscar_vagas(termo_busca)
-    vagas_salvas = salvar_vagas(vagas)
+    if fonte == "remotive":
+        vagas = buscar_vagas_remotive(termo_busca)
 
+    elif fonte == "himalayas":
+        vagas = buscar_vagas_himalayas(termo_busca)
+
+    else:
+        raise ValueError(f"Fonte não suportada: {fonte}")
+
+    vagas_salvas = salvar_vagas(vagas)
     finalizada_em = datetime.now()
 
     registrar_coleta(
@@ -42,7 +51,7 @@ def coletar_vagas(termo_busca: str) -> None:
     )
 
     logger.info(
-        "%s vagas encontradas e %s novas vagas salvas.",
+        "%s vagas encontradas e %s vagas novas salvas.",
         len(vagas),
         vagas_salvas,
     )
@@ -80,6 +89,13 @@ def criar_parser() -> argparse.ArgumentParser:
         help="Termo usado para buscar vagas.",
     )
 
+    collect_parser.add_argument(
+    "--source",
+    choices=["remotive", "himalayas"],
+    default="remotive",
+    help="Fonte utilizada na coleta.",
+    )
+    
     subparsers.add_parser(
         "export",
         help="Exporta os dados tratados para CSV.",
@@ -96,6 +112,13 @@ def criar_parser() -> argparse.ArgumentParser:
         help="Termo usado para buscar vagas.",
     )
 
+    all_parser.add_argument(
+    "--source",
+    choices=["remotive", "himalayas"],
+    default="remotive",
+    help="Fonte utilizada na coleta.",
+    )
+
     return parser
 
 
@@ -104,13 +127,19 @@ def main() -> None:
     argumentos = parser.parse_args()
 
     if argumentos.comando == "collect":
-        coletar_vagas(argumentos.search)
-
-    elif argumentos.comando == "export":
-        exportar_dados()
+        coletar_vagas(
+            termo_busca=argumentos.search,
+            fonte=argumentos.source,
+        )
 
     elif argumentos.comando == "all":
-        coletar_vagas(argumentos.search)
+        coletar_vagas(
+            termo_busca=argumentos.search,
+            fonte=argumentos.source,
+        )
+        exportar_dados()
+
+    elif argumentos.comando == "export":
         exportar_dados()
 
 
