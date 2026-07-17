@@ -1,6 +1,9 @@
+import requests
+import logging
+
 from api.himalayas import converter_vaga, formatar_localizacoes
 from models.job import Job
-
+from main import coletar_vagas
 
 def test_formatar_localizacoes_com_strings():
     localizacoes = ["Brazil", "Portugal"]
@@ -118,3 +121,56 @@ def test_buscar_vagas_himalayas_retorna_jobs(mocker):
     )
 
     resposta_falsa.raise_for_status.assert_called_once()
+
+
+
+def test_coleta_registra_erro_quando_api_falha(mocker):
+    mocker.patch(
+        "main.buscar_vagas_himalayas",
+        side_effect=requests.RequestException("API indisponível"),
+    )
+
+    registrar_mock = mocker.patch("main.registrar_coleta")
+    mocker.patch("main.criar_tabela")
+    mocker.patch("main.criar_tabela_coletas")
+
+    coletar_vagas(
+        termo_busca="data analyst",
+        fonte="himalayas",
+    )
+
+    registrar_mock.assert_called_once()
+
+    argumentos = registrar_mock.call_args.kwargs
+
+    assert argumentos["status"] == "erro"
+    assert argumentos["vagas_encontradas"] == 0
+    assert argumentos["vagas_salvas"] == 0
+
+
+def test_coleta_registra_erro_quando_api_falha(
+    mocker,
+    caplog,
+):
+    mocker.patch(
+        "main.buscar_vagas_himalayas",
+        side_effect=requests.RequestException("API indisponível"),
+    )
+
+    registrar_mock = mocker.patch("main.registrar_coleta")
+    mocker.patch("main.criar_tabela")
+    mocker.patch("main.criar_tabela_coletas")
+
+    with caplog.at_level(logging.ERROR):
+        coletar_vagas(
+            termo_busca="data analyst",
+            fonte="himalayas",
+        )
+
+    argumentos = registrar_mock.call_args.kwargs
+
+    assert argumentos["status"] == "erro"
+    assert argumentos["vagas_encontradas"] == 0
+    assert argumentos["vagas_salvas"] == 0
+    assert "API indisponível" in caplog.text
+
