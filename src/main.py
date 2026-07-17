@@ -1,6 +1,7 @@
 import argparse
 import logging
 from datetime import datetime
+from requests import RequestException
 
 from config.logging_config import configurar_logging
 from api.himalayas import buscar_vagas as buscar_vagas_himalayas
@@ -29,32 +30,51 @@ def coletar_vagas(termo_busca: str, fonte: str) -> None:
     criar_tabela()
     criar_tabela_coletas()
 
-    if fonte == "remotive":
-        vagas = buscar_vagas_remotive(termo_busca)
+    try:
+        if fonte == "remotive":
+            vagas = buscar_vagas_remotive(termo_busca)
 
-    elif fonte == "himalayas":
-        vagas = buscar_vagas_himalayas(termo_busca)
+        elif fonte == "himalayas":
+            vagas = buscar_vagas_himalayas(termo_busca)
 
-    else:
-        raise ValueError(f"Fonte não suportada: {fonte}")
+        else:
+            raise ValueError(f"Fonte não suportada: {fonte}")
 
-    vagas_salvas = salvar_vagas(vagas)
-    finalizada_em = datetime.now()
+        vagas_salvas = salvar_vagas(vagas)
+        finalizada_em = datetime.now()
 
-    registrar_coleta(
-        termo_busca=termo_busca,
-        iniciada_em=iniciada_em,
-        finalizada_em=finalizada_em,
-        vagas_encontradas=len(vagas),
-        vagas_salvas=vagas_salvas,
-        status="sucesso",
-    )
+        registrar_coleta(
+            termo_busca=termo_busca,
+            iniciada_em=iniciada_em,
+            finalizada_em=finalizada_em,
+            vagas_encontradas=len(vagas),
+            vagas_salvas=vagas_salvas,
+            status="sucesso",
+        )
 
-    logger.info(
-        "%s vagas encontradas e %s vagas novas salvas.",
-        len(vagas),
-        vagas_salvas,
-    )
+        logger.info(
+            "%s vagas encontradas e %s vagas novas salvas.",
+            len(vagas),
+            vagas_salvas,
+        )
+
+    except RequestException as erro:
+        finalizada_em = datetime.now()
+
+        registrar_coleta(
+            termo_busca=termo_busca,
+            iniciada_em=iniciada_em,
+            finalizada_em=finalizada_em,
+            vagas_encontradas=0,
+            vagas_salvas=0,
+            status="erro",
+        )
+
+        logger.error(
+            "Falha ao consultar a fonte '%s': %s",
+            fonte,
+            erro,
+        )
 
 
 def exportar_dados() -> None:
