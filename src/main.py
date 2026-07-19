@@ -11,6 +11,7 @@ from database.sqlite import (
     criar_tabela_coletas,
     registrar_coleta,
     salvar_vagas,
+    buscar_ultima_coleta,
 )
 from export.csv_exporter import exportar_vagas_csv
 
@@ -121,6 +122,11 @@ def criar_parser() -> argparse.ArgumentParser:
         help="Exporta os dados tratados para CSV.",
     )
 
+    subparsers.add_parser(
+    "status",
+    help="Exibe informações da última coleta.",
+    )
+
     all_parser = subparsers.add_parser(
         "all",
         help="Executa coleta e exportação.",
@@ -140,6 +146,22 @@ def criar_parser() -> argparse.ArgumentParser:
     )
 
     return parser
+
+
+def exibir_status() -> None:
+    ultima_coleta = buscar_ultima_coleta()
+
+    if ultima_coleta is None:
+        print("Nenhuma coleta foi registrada ainda.")
+        return
+
+    print("Última coleta")
+    print(f"Busca: {ultima_coleta['termo_busca']}")
+    print(f"Status: {ultima_coleta['status']}")
+    print(f"Encontradas: {ultima_coleta['vagas_encontradas']}")
+    print(f"Novas: {ultima_coleta['vagas_salvas']}")
+    print(f"Início: {ultima_coleta['iniciada_em']}")
+    print(f"Fim: {ultima_coleta['finalizada_em']}")
 
 
 def main() -> None:
@@ -162,6 +184,8 @@ def main() -> None:
     elif argumentos.comando == "export":
         exportar_dados()
 
+    elif argumentos.comando == "status":
+        exibir_status()
 
 if __name__ == "__main__":
     main()
