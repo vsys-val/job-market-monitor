@@ -112,3 +112,28 @@ def registrar_coleta(
                 status,
             ),
         )
+
+
+def buscar_ultima_coleta() -> dict | None:
+    with sqlite3.connect(DATABASE_PATH) as conexao:
+        conexao.row_factory = sqlite3.Row
+
+        resultado = conexao.execute(
+            """
+            SELECT
+                termo_busca,
+                iniciada_em,
+                finalizada_em,
+                vagas_encontradas,
+                vagas_salvas,
+                status
+            FROM collection_runs
+            ORDER BY id DESC
+            LIMIT 1
+            """
+        ).fetchone()
+
+    if resultado is None:
+        return None
+
+    return dict(resultado)
